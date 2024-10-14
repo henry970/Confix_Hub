@@ -1,47 +1,41 @@
-name: Run Tests
+name: Python Tests
 
-# Trigger the workflow on push, pull request, and schedule
 on:
-  # Run tests when pushing code to the main branch (or another branch)
   push:
     branches:
-      - main  # Change to the branch you deploy to (e.g., 'production', 'staging')
-
-  # Run tests when a pull request is opened or updated for the main branch
+      - main
   pull_request:
     branches:
       - main
 
-  # Schedule to run at a specific time using cron
-  schedule:
-    - cron: "0 0 * * *"  # Runs every day at midnight UTC
-
-  # Allow manual trigger via the GitHub Actions UI
-  workflow_dispatch:
-
 jobs:
   test:
-    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+    runs-on: ubuntu-latest
 
     steps:
-      # Step to check out the repository code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      # Set up Python (change this if you're using another language)
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.8'  # Specify your Python version here
 
-      # Install the project dependencies
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m venv venv
+          source venv/bin/activate
           pip install -r requirements.txt
+          pip install pytest pytest-html
 
-      # Run the tests (e.g., pytest for Python)
       - name: Run tests
         run: |
-          pytest  # Replace this with the command to run your tests
+          source venv/bin/activate
+          pytest --html=report.html -p no:warnings
 
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-report
+          path: report.html
